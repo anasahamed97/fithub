@@ -59,7 +59,7 @@ export function AppSidebar() {
     label: string,
     items: typeof ownerItems
   ) => (
-    <SidebarGroup defaultOpen>
+    <SidebarGroup>
       <SidebarGroupLabel className="text-muted-foreground/60 uppercase tracking-widest text-[10px] font-semibold">
         {label}
       </SidebarGroupLabel>
