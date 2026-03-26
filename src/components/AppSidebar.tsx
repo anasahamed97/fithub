@@ -100,9 +100,9 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="py-2">
-        {renderGroup("Owner", ownerItems)}
-        {renderGroup("Customer", customerItems)}
-        {renderGroup("Trainer", trainerItems)}
+        {(!user || user.role === "owner") && renderGroup("Owner", ownerItems)}
+        {(!user || user.role === "member") && renderGroup("Customer", customerItems)}
+        {(!user || user.role === "trainer") && renderGroup("Trainer", trainerItems)}
       </SidebarContent>
     </Sidebar>
   );
