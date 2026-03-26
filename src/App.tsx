@@ -3,7 +3,10 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
+import LoginPage from "./pages/LoginPage";
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import MembersPage from "./pages/owner/MembersPage";
 import TrainersPage from "./pages/owner/TrainersPage";
@@ -21,30 +24,58 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const OwnerRoute = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute allowedRoles={["owner"]}>
+    <DashboardLayout>{children}</DashboardLayout>
+  </ProtectedRoute>
+);
+
+const TrainerRoute = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute allowedRoles={["trainer"]}>
+    <DashboardLayout>{children}</DashboardLayout>
+  </ProtectedRoute>
+);
+
+const MemberRoute = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute allowedRoles={["member"]}>
+    <DashboardLayout>{children}</DashboardLayout>
+  </ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/owner" replace />} />
-          <Route path="/owner" element={<DashboardLayout><OwnerDashboard /></DashboardLayout>} />
-          <Route path="/owner/members" element={<DashboardLayout><MembersPage /></DashboardLayout>} />
-          <Route path="/owner/trainers" element={<DashboardLayout><TrainersPage /></DashboardLayout>} />
-          <Route path="/owner/equipment" element={<DashboardLayout><EquipmentPage /></DashboardLayout>} />
-          <Route path="/owner/revenue" element={<DashboardLayout><RevenuePage /></DashboardLayout>} />
-          <Route path="/customer" element={<DashboardLayout><CustomerDashboard /></DashboardLayout>} />
-          <Route path="/customer/plan" element={<DashboardLayout><PlanPage /></DashboardLayout>} />
-          <Route path="/customer/schedule" element={<DashboardLayout><SchedulePage /></DashboardLayout>} />
-          <Route path="/customer/progress" element={<DashboardLayout><ProgressPage /></DashboardLayout>} />
-          <Route path="/trainer" element={<DashboardLayout><TrainerDashboard /></DashboardLayout>} />
-          <Route path="/trainer/clients" element={<DashboardLayout><ClientsPage /></DashboardLayout>} />
-          <Route path="/trainer/schedule" element={<DashboardLayout><TrainerSchedulePage /></DashboardLayout>} />
-          <Route path="/trainer/workouts" element={<DashboardLayout><WorkoutsPage /></DashboardLayout>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Owner routes */}
+            <Route path="/owner" element={<OwnerRoute><OwnerDashboard /></OwnerRoute>} />
+            <Route path="/owner/members" element={<OwnerRoute><MembersPage /></OwnerRoute>} />
+            <Route path="/owner/trainers" element={<OwnerRoute><TrainersPage /></OwnerRoute>} />
+            <Route path="/owner/equipment" element={<OwnerRoute><EquipmentPage /></OwnerRoute>} />
+            <Route path="/owner/revenue" element={<OwnerRoute><RevenuePage /></OwnerRoute>} />
+
+            {/* Member routes */}
+            <Route path="/customer" element={<MemberRoute><CustomerDashboard /></MemberRoute>} />
+            <Route path="/customer/plan" element={<MemberRoute><PlanPage /></MemberRoute>} />
+            <Route path="/customer/schedule" element={<MemberRoute><SchedulePage /></MemberRoute>} />
+            <Route path="/customer/progress" element={<MemberRoute><ProgressPage /></MemberRoute>} />
+
+            {/* Trainer routes */}
+            <Route path="/trainer" element={<TrainerRoute><TrainerDashboard /></TrainerRoute>} />
+            <Route path="/trainer/clients" element={<TrainerRoute><ClientsPage /></TrainerRoute>} />
+            <Route path="/trainer/schedule" element={<TrainerRoute><TrainerSchedulePage /></TrainerRoute>} />
+            <Route path="/trainer/workouts" element={<TrainerRoute><WorkoutsPage /></TrainerRoute>} />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

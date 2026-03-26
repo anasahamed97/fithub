@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user } = useAuth();
 
   const renderGroup = (
     label: string,
@@ -98,9 +100,9 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="py-2">
-        {renderGroup("Owner", ownerItems)}
-        {renderGroup("Customer", customerItems)}
-        {renderGroup("Trainer", trainerItems)}
+        {(!user || user.role === "owner") && renderGroup("Owner", ownerItems)}
+        {(!user || user.role === "member") && renderGroup("Customer", customerItems)}
+        {(!user || user.role === "trainer") && renderGroup("Trainer", trainerItems)}
       </SidebarContent>
     </Sidebar>
   );
