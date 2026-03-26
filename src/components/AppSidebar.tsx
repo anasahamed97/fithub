@@ -55,6 +55,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user } = useAuth();
 
   const renderGroup = (
     label: string,
