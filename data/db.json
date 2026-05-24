@@ -1,0 +1,483 @@
+{
+  "plans": [
+    {
+      "id": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "name": "Basic Gym Access",
+      "price": 29,
+      "duration": 1,
+      "features": [
+        "Full gym floor access",
+        "Standard locker room access",
+        "1 complementary fitness assessment"
+      ]
+    },
+    {
+      "id": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "name": "Elite Fitness Pro",
+      "price": 59,
+      "duration": 1,
+      "features": [
+        "Full gym floor access",
+        "All group fitness classes",
+        "Sauna & Steam room access",
+        "1 personal trainer session/mo"
+      ]
+    },
+    {
+      "id": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "name": "VIP Unlimited VIP",
+      "price": 99,
+      "duration": 1,
+      "features": [
+        "24/7 unlimited access",
+        "All group & VIP specialty classes",
+        "Weekly personal trainer session",
+        "Towel service & VIP lounge access",
+        "Custom nutrition plan"
+      ]
+    }
+  ],
+  "trainers": [
+    {
+      "id": "33b0170e-324b-44b2-b87d-ad7d1590e73b",
+      "name": "Sarah Connor",
+      "specialty": "Strength & Conditioning",
+      "phone": "+1 (555) 019-2831",
+      "email": "sarah.c@fithub.com",
+      "status": "Active"
+    },
+    {
+      "id": "38d3723a-96c3-407c-9883-a8ab67024b14",
+      "name": "Marcus Aurelius",
+      "specialty": "HIIT & Athletic Cardio",
+      "phone": "+1 (555) 014-9982",
+      "email": "marcus.a@fithub.com",
+      "status": "Active"
+    },
+    {
+      "id": "9504d8a7-65f1-451d-ad91-640858827faf",
+      "name": "Elena Rostova",
+      "specialty": "Yoga, Pilates & Flexibility",
+      "phone": "+1 (555) 017-4839",
+      "email": "elena.r@fithub.com",
+      "status": "Active"
+    },
+    {
+      "id": "26b8151e-9d8f-497b-b213-ddcd661dcc45",
+      "name": "David Goggins",
+      "specialty": "Endurance & Mental Toughness",
+      "phone": "+1 (555) 012-3329",
+      "email": "david.g@fithub.com",
+      "status": "Active"
+    }
+  ],
+  "members": [
+    {
+      "id": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "name": "John Doe",
+      "email": "john.doe@gmail.com",
+      "phone": "+1 (555) 123-4567",
+      "joinDate": "2026-01-23",
+      "status": "Active",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "trainerId": "33b0170e-324b-44b2-b87d-ad7d1590e73b",
+      "gender": "Male",
+      "notes": "Recovering from a minor hamstring strain. Focus on leg strengthening but avoid high impact jumps."
+    },
+    {
+      "id": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "name": "Emily Watson",
+      "email": "emily.w@yahoo.com",
+      "phone": "+1 (555) 987-6543",
+      "joinDate": "2026-02-22",
+      "status": "Active",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "trainerId": "38d3723a-96c3-407c-9883-a8ab67024b14",
+      "gender": "Female",
+      "notes": "Prepping for a local 10k run. Training for endurance and speed intervals."
+    },
+    {
+      "id": "be848078-2287-463a-8822-b6b6065de9d2",
+      "name": "Michael Chang",
+      "email": "m.chang@hotmail.com",
+      "phone": "+1 (555) 234-5678",
+      "joinDate": "2026-03-24",
+      "status": "Active",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "trainerId": "",
+      "gender": "Male",
+      "notes": "Mainly does general weightlifting. Prefers morning workouts."
+    },
+    {
+      "id": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "name": "Sophia Martinez",
+      "email": "sophia.m@gmail.com",
+      "phone": "+1 (555) 876-5432",
+      "joinDate": "2026-04-08",
+      "status": "Active",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "trainerId": "9504d8a7-65f1-451d-ad91-640858827faf",
+      "gender": "Female",
+      "notes": "Yoga and Pilates focus. Wants to work on core stability and posture."
+    },
+    {
+      "id": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "name": "James Wilson",
+      "email": "j.wilson@gmail.com",
+      "phone": "+1 (555) 345-6789",
+      "joinDate": "2026-04-23",
+      "status": "Active",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "trainerId": "26b8151e-9d8f-497b-b213-ddcd661dcc45",
+      "gender": "Male",
+      "notes": "High intensity training enthusiast. Highly motivated."
+    },
+    {
+      "id": "f0e78a75-0f98-432d-8745-3ee050be1bbc",
+      "name": "Olivia Taylor",
+      "email": "olivia.t@gmail.com",
+      "phone": "+1 (555) 765-4321",
+      "joinDate": "2026-05-08",
+      "status": "Pending",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "trainerId": "",
+      "gender": "Female",
+      "notes": "New to gym environments. Booked a general induction course."
+    },
+    {
+      "id": "2c7ed62e-af1f-49d2-8823-7d7a02553f9b",
+      "name": "William Brown",
+      "email": "william.b@outlook.com",
+      "phone": "+1 (555) 456-7890",
+      "joinDate": "2025-11-04",
+      "status": "Inactive",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "trainerId": "",
+      "gender": "Male",
+      "notes": "Membership paused due to business travel. Expected to resume in two months."
+    },
+    {
+      "id": "296558a4-b92e-4dfc-bd02-87bfffa8448d",
+      "name": "Isabella Garcia",
+      "email": "isabella.g@gmail.com",
+      "phone": "+1 (555) 654-3210",
+      "joinDate": "2026-05-18",
+      "status": "Active",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "trainerId": "9504d8a7-65f1-451d-ad91-640858827faf",
+      "gender": "Female",
+      "notes": "Interested in group classes, specifically Zumba and Core Yoga."
+    },
+    {
+      "id": "e28708e0-a8ba-4f21-9919-6823c444e6c6",
+      "joinDate": "2026-05-23",
+      "status": "Active",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "trainerId": "33b0170e-324b-44b2-b87d-ad7d1590e73b",
+      "name": "Anas Ahamed",
+      "email": "anasahamed438@gmail.com",
+      "phone": "+916364282142",
+      "gender": "Male",
+      "notes": ""
+    }
+  ],
+  "attendance": [
+    {
+      "id": "8abfc076-ce28-4595-b2fa-8be120ef7ee4",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "date": "2026-05-23",
+      "time": "08:15",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "a4dd515d-8d83-4400-9691-cc4050be1278",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "date": "2026-05-23",
+      "time": "09:30",
+      "checkInType": "Cardio Kickboxing Class"
+    },
+    {
+      "id": "216c07df-6a3e-4fff-a1cd-a11e51f9bc78",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "date": "2026-05-23",
+      "time": "10:00",
+      "checkInType": "Vinyasa Yoga Class"
+    },
+    {
+      "id": "768bfced-ff3e-4aa5-91d2-1455bfb693a3",
+      "memberId": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "date": "2026-05-23",
+      "time": "07:00",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "29e5a295-fc40-48c5-8d03-af0ba81de54e",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "date": "2026-05-23",
+      "time": "12:15",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "bed4c1d9-c32f-490f-b748-2c4bf24efbb1",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "date": "2026-05-22",
+      "time": "08:00",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "0f4b23cf-4955-4319-b2ac-6661ccffc776",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "date": "2026-05-22",
+      "time": "17:30",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "1f1b051e-39ba-4624-87cb-4f38dfa02294",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "date": "2026-05-22",
+      "time": "12:30",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "d8e72564-fc7e-4891-bb32-be90f3324388",
+      "memberId": "296558a4-b92e-4dfc-bd02-87bfffa8448d",
+      "date": "2026-05-22",
+      "time": "18:00",
+      "checkInType": "Intro to Weights Class"
+    },
+    {
+      "id": "1eac7e19-6580-48c3-9c08-09b50a7d7904",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "date": "2026-05-22",
+      "time": "10:15",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "5e79ca2d-37c2-40a0-89ba-c977c8cd19ce",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "date": "2026-05-21",
+      "time": "08:30",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "8dd8d83e-1db6-4e70-bc3e-d547697ab7cc",
+      "memberId": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "date": "2026-05-21",
+      "time": "07:15",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "2ec3d844-9b9f-417f-a970-01a320d37c60",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "date": "2026-05-21",
+      "time": "09:00",
+      "checkInType": "HIIT Blast Class"
+    },
+    {
+      "id": "5766110f-050a-4788-960f-4d5b588b66d0",
+      "memberId": "296558a4-b92e-4dfc-bd02-87bfffa8448d",
+      "date": "2026-05-20",
+      "time": "18:15",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "0742e007-4585-4246-8ec3-9f74835c220d",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "date": "2026-05-20",
+      "time": "08:00",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "0b96dc3e-deb9-4f4a-9c95-bb448ae5810f",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "date": "2026-05-20",
+      "time": "10:00",
+      "checkInType": "Vinyasa Yoga Class"
+    },
+    {
+      "id": "026f5cd7-5769-477e-af25-15058bea691e",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "date": "2026-05-19",
+      "time": "12:00",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "83f6c7a4-6e68-4573-859c-af40af5dd20e",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "date": "2026-05-19",
+      "time": "17:00",
+      "checkInType": "Gym Access"
+    },
+    {
+      "id": "d523ff7e-04a6-48f9-a5ca-e4884dda9cbf",
+      "memberId": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "date": "2026-05-19",
+      "time": "07:00",
+      "checkInType": "Gym Access"
+    }
+  ],
+  "payments": [
+    {
+      "id": "0e9fc1cd-ed85-4eb0-a540-cb21131b7519",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-05-18",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "6f4640cd-caac-496c-87ef-b8dd15349c15",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-05-20",
+      "paymentMethod": "UPI",
+      "status": "Paid"
+    },
+    {
+      "id": "771c05a7-686b-48cf-a249-64ad44865646",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-05-13",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "cd5c32db-ed6d-47f1-b3eb-9a83ed5ad857",
+      "memberId": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-05-15",
+      "paymentMethod": "Bank Transfer",
+      "status": "Paid"
+    },
+    {
+      "id": "8292cf0a-cc55-4b2e-9e4b-1023a201c9e5",
+      "memberId": "296558a4-b92e-4dfc-bd02-87bfffa8448d",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-05-18",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "5c49912b-2d9b-49db-9f5f-b0a8e14c4713",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "date": "2026-05-11",
+      "paymentMethod": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": "9e21c285-b83d-40d1-baad-4eb406825a3e",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-04-18",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "25867b98-f3f4-4b8c-96bd-7da028f38f32",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-04-20",
+      "paymentMethod": "UPI",
+      "status": "Paid"
+    },
+    {
+      "id": "2b3aaba0-808e-43bb-8e00-f9b4146424c8",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-04-13",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "8b8259e9-f3b1-4059-b0b9-0b07395fb2fa",
+      "memberId": "759130b8-5efb-49df-bb3b-e6c66ce5385c",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-04-15",
+      "paymentMethod": "Bank Transfer",
+      "status": "Paid"
+    },
+    {
+      "id": "9c27b7e6-dd21-45a6-81b8-efdf5539f6c0",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "date": "2026-04-11",
+      "paymentMethod": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": "fa687c97-d400-4192-82ba-57f9040fbefc",
+      "memberId": "2c7ed62e-af1f-49d2-8823-7d7a02553f9b",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "date": "2026-04-03",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "618ac394-6b3f-4c73-aceb-9acb1e151da5",
+      "memberId": "1e2c0cd6-d804-4ef3-8ed7-65123696f583",
+      "planId": "30ad64f0-554d-4619-83c1-b0726de379f2",
+      "amount": 59,
+      "date": "2026-03-19",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "67c1b828-9fc2-45a4-a853-11b6fd7e2a33",
+      "memberId": "a93a73b7-3ed9-49e4-b841-87de9bb069cd",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-03-21",
+      "paymentMethod": "UPI",
+      "status": "Paid"
+    },
+    {
+      "id": "6f95860f-eb79-4d7b-9e65-dba50b8ecf70",
+      "memberId": "4a2ce81b-a64b-48c4-9e75-259d15ce6957",
+      "planId": "e94a44fe-2bea-4e58-8d47-a9c2be7f910d",
+      "amount": 99,
+      "date": "2026-03-14",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "676a68e3-6ef4-4404-8223-0e0d931dcecc",
+      "memberId": "be848078-2287-463a-8822-b6b6065de9d2",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "date": "2026-03-12",
+      "paymentMethod": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": "4dbaf820-c7d6-4f88-a6cf-2d781aba034f",
+      "memberId": "2c7ed62e-af1f-49d2-8823-7d7a02553f9b",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "date": "2026-03-04",
+      "paymentMethod": "Card",
+      "status": "Paid"
+    },
+    {
+      "id": "f2c1b799-acb1-4a6c-ad5f-06d8bd9ebb9e",
+      "date": "2026-05-23",
+      "status": "Paid",
+      "memberId": "e28708e0-a8ba-4f21-9919-6823c444e6c6",
+      "planId": "896af3d3-f5ce-4f8c-a9c4-0fc0cbbddc82",
+      "amount": 29,
+      "paymentMethod": "UPI"
+    }
+  ]
+}

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="FitHub – Sign in to your gym management dashboard." />
+  <title>FitHub – Sign In</title>
+
+  <!-- Fonts & Icons (same as index.html) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* ── Design tokens (exact match with styles.css) ── */
+    :root {
+      --bg-primary:    #09090b;
+      --bg-secondary:  #121214;
+      --bg-tertiary:   #1a1a1e;
+      --card-bg:       rgba(20, 20, 24, 0.85);
+      --card-border:   rgba(255, 255, 255, 0.06);
+      --text-main:     #f4f4f5;
+      --text-muted:    #a1a1aa;
+
+      /* Orange accent (matching screenshot) */
+      --accent:        #f97316;
+      --accent-dim:    rgba(249, 115, 22, 0.15);
+      --accent-hover:  #fb923c;
+
+      /* Purple kept for brand glow */
+      --color-purple:  #a855f7;
+
+      --font-heading: 'Outfit', sans-serif;
+      --font-body:    'Inter', sans-serif;
+      --radius-lg:    16px;
+      --radius-md:    10px;
+      --radius-sm:    6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ── Ambient background blobs ── */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-blob-1 {
+      width: 520px; height: 520px;
+      top: -15%; right: -8%;
+      background: rgba(249, 115, 22, 0.07);
+    }
+    .bg-blob-2 {
+      width: 380px; height: 380px;
+      bottom: -15%; left: -8%;
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    /* ── Left branding panel ── */
+    .brand-panel {
+      display: none;
+      position: relative;
+      flex: 0 0 44%;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 3.5rem;
+      border-right: 1px solid var(--card-border);
+      background: linear-gradient(145deg, rgba(249,115,22,0.06) 0%, transparent 60%);
+      z-index: 1;
+    }
+    @media (min-width: 1024px) { .brand-panel { display: flex; } }
+
+    .brand-content { max-width: 380px; }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2.5rem;
+    }
+    .brand-logo-icon {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent), #ef4444);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: #fff;
+      box-shadow: 0 0 20px rgba(249,115,22,0.35);
+    }
+    .brand-logo-name {
+      font-family: var(--font-heading);
+      font-size: 2rem; font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .brand-logo-name span { color: var(--accent); }
+
+    .brand-heading {
+      font-family: var(--font-heading);
+      font-size: 2.4rem; font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .brand-heading em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand-sub {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .feature-pills {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .feature-pill {
+      font-size: 0.75rem;
+      padding: 5px 14px;
+      border-radius: 50px;
+      border: 1px solid var(--card-border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Right login panel ── */
+    .login-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      z-index: 1;
+    }
+
+    .login-wrapper { width: 100%; max-width: 440px; }
+
+    /* Mobile logo */
+    .mobile-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 1024px) { .mobile-logo { display: none; } }
+
+    .mobile-logo i {
+      font-size: 1.6rem;
+      color: var(--accent);
+      filter: drop-shadow(0 0 8px rgba(249,115,22,0.4));
+    }
+    .mobile-logo-name {
+      font-family: var(--font-heading);
+      font-size: 1.6rem; font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .mobile-logo-name span { color: var(--accent); }
+
+    /* ── Card ── */
+    .login-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.75rem; font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .card-sub {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem;
+    }
+
+    /* ── Role selector ── */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .role-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 8px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--card-border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.22s ease;
+      font-family: var(--font-body);
+    }
+    .role-btn i { font-size: 1.2rem; }
+    .role-btn span { font-size: 0.8rem; font-weight: 600; }
+
+    .role-btn:hover {
+      border-color: rgba(249,115,22,0.35);
+      background: rgba(249,115,22,0.06);
+      color: var(--text-main);
+    }
+
+    .role-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(249,115,22,0.2);
+    }
+
+    /* ── Role description badge ── */
+    .role-desc {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 1.5rem;
+      transition: opacity 0.2s;
+    }
+    .role-desc strong { color: var(--text-main); font-weight: 600; }
+
+    /* ── Form fields ── */
+    .form-group { margin-bottom: 1.1rem; }
+
+    .form-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .forgot-link {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      background: none; border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      padding: 0;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    .input-wrapper { position: relative; }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input::placeholder { color: rgba(161,161,170,0.5); }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+    }
+
+    .password-input { padding-right: 44px !important; }
+
+    .toggle-pw {
+      position: absolute;
+      right: 13px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      padding: 0;
+      display: flex; align-items: center;
+    }
+    .toggle-pw:hover { color: var(--text-main); }
+
+    /* ── Submit button ── */
+    .btn-signin {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 13px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(249,115,22,0.35);
+    }
+    .btn-signin:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1.5px);
+      box-shadow: 0 8px 28px rgba(249,115,22,0.45);
+    }
+    .btn-signin:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .btn-signin .spinner { animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer note ── */
+    .card-footer-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 1.25rem;
+    }
+    .card-footer-note button {
+      background: none; border: none; padding: 0;
+      color: var(--accent); font-family: var(--font-body);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    }
+    .card-footer-note button:hover { text-decoration: underline; }
+
+    .demo-note {
+      text-align: center;
+      font-size: 0.72rem;
+      color: rgba(161,161,170,0.4);
+      margin-top: 1rem;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem; font-weight: 500;
+      opacity: 0; transform: translateY(8px);
+      transition: all 0.3s ease;
+      z-index: 9999;
+      max-width: 320px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error  { background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.35); color: #fb7185; }
+    .toast.success{ background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399; }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient blobs -->
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+
+  <!-- Left branding panel (lg+) -->
+  <div class="brand-panel">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <div class="brand-logo-icon"><i class="fa-solid fa-dumbbell"></i></div>
+        <span class="brand-logo-name">Fit<span>Hub</span></span>
+      </div>
+      <h1 class="brand-heading">Manage your gym<br /><em>like a pro.</em></h1>
+      <p class="brand-sub">
+        All-in-one platform for gym owners, trainers, and members.
+        Track performance, manage schedules, and grow your fitness business.
+      </p>
+      <div class="feature-pills">
+        <span class="feature-pill">Member Management</span>
+        <span class="feature-pill">Workout Plans</span>
+        <span class="feature-pill">Revenue Tracking</span>
+        <span class="feature-pill">Equipment Logs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right login panel -->
+  <div class="login-panel">
+    <div class="login-wrapper">
+
+      <!-- Mobile logo -->
+      <div class="mobile-logo">
+        <i class="fa-solid fa-dumbbell"></i>
+        <span class="mobile-logo-name">Fit<span>Hub</span></span>
+      </div>
+
+      <div class="login-card">
+        <h2 class="card-title">Sign in</h2>
+        <p class="card-sub">Choose your role and log in to continue</p>
+
+        <!-- Role selector -->
+        <div class="role-grid" id="role-grid">
+          <button class="role-btn active" data-role="admin" id="role-admin" type="button">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Admin</span>
+          </button>
+          <button class="role-btn" data-role="trainer" id="role-trainer" type="button">
+            <i class="fa-solid fa-user-gear"></i>
+            <span>Trainer</span>
+          </button>
+          <button class="role-btn" data-role="member" id="role-member" type="button">
+            <i class="fa-solid fa-users"></i>
+            <span>Member</span>
+          </button>
+        </div>
+
+        <!-- Role description -->
+        <div class="role-info">
+          <span class="role-name" id="role-name">Admin</span>
+          <span class="role-tag" id="role-tag">System administration</span>
+        </div>
+
+        <!-- Form -->
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-wrapper">
+              <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="password">Password</label>
+              <button type="button" class="forgot-link">Forgot password?</button>
+            </div>
+            <div class="input-wrapper">
+              <input type="password" id="password" class="password-input" placeholder="••••••••" autocomplete="current-password" required />
+              <button type="button" class="toggle-pw" id="toggle-pw" aria-label="Toggle password visibility">
+                <i class="fa-regular fa-eye" id="eye-icon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-signin" id="btn-signin">
+            Sign in <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-modal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close" id="forgot-close">&times;</span>
+        <div id="forgot-step-1">
+          <h3>Forgot Password</h3>
+          <p>Enter your email and role to receive an OTP.</p>
+          <div class="form-group">
+            <label for="fp-email">Email</label>
+            <input type="email" id="fp-email" placeholder="you@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="fp-role">Role</label>
+            <select id="fp-role">
+              <option value="member">Member</option>
+              <option value="trainer">Trainer</option>
+            </select>
+          </div>
+          <button class="btn" id="fp-send-otp">Send OTP</button>
+        </div>
+        <div id="forgot-step-2" style="display:none;">
+          <h3>Reset Password</h3>
+          <p>Enter the OTP sent to your email and your new password.</p>
+          <div class="form-group">
+            <label for="fp-otp">OTP</label>
+            <input type="text" id="fp-otp" placeholder="6‑digit code" required />
+          </div>
+          <div class="form-group">
+            <label for="fp-new-pw">New Password</label>
+            <input type="password" id="fp-new-pw" placeholder="••••••••" required />
+          </div>
+          <button class="btn" id="fp-reset-pw">Reset Password</button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .modal {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 380px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        position: relative;
+      }
+      .modal-content .close {
+        position: absolute;
+        top: 0.5rem; right: 0.8rem;
+        font-size: 1.4rem; cursor: pointer; color: var(--text-muted);
+      }
+      .modal-content h3 { margin-top:0; font-family: var(--font-heading); }
+      .modal-content .form-group { margin: 1rem 0; }
+      .modal-content .form-group label { display:block; margin-bottom:0.3rem; }
+      .modal-content .form-group input,
+      .modal-content .form-group select { width:100%; padding:0.6rem; border:1px solid var(--card-border); border-radius:var(--radius-sm); background: var(--bg-secondary); color: var(--text-main); }
+      .modal-content .btn { width:100%; padding:0.6rem; background: var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer; margin-top:0.5rem; }
+      .modal-content .btn:hover { background: var(--accent-hover); }
+    </style>
+
+    <script>
+      // Forgot password flow
+      const modal = document.getElementById('forgot-modal');
+      const closeBtn = document.getElementById('forgot-close');
+      const fpLink = document.querySelector('.forgot-link');
+      const step1 = document.getElementById('forgot-step-1');
+      const step2 = document.getElementById('forgot-step-2');
+      const sendOtpBtn = document.getElementById('fp-send-otp');
+      const resetPwBtn = document.getElementById('fp-reset-pw');
+
+      fpLink.addEventListener('click', () => { modal.style.display = 'flex'; step1.style.display = 'block'; step2.style.display = 'none'; });
+      closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+      window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+      sendOtpBtn.addEventListener('click', async () => {
+        const email = document.getElementById('fp-email').value.trim();
+        const role = document.getElementById('fp-role').value;
+        if (!email) { showToast('Please enter your email', 'error'); return; }
+        try {
+          const resp = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, role })
+          });
+          const data = await resp.json();
+          if (!resp.ok) { showToast(data.error || 'Failed to send OTP', 'error'); return; }
+          showToast(`OTP sent to ${email}`, 'success');
+          step1.style.display = 'none';
+          step2.style.display = 'block';
+        } catch (e) { showToast('Network error', 'error'); }
+      });
+
+      resetPwBtn.addEventListener('click', async () => {
+        const email = document.getElementById('fp-email').value.trim();
+        const role = document.getElementById('fp-role').value;
+        const otp = document.getElementById('fp-otp').value.trim();
+        const newPassword = document.getElementById('fp-new-pw').value;
+        if (!otp || !newPassword) { showToast('All fields required', 'error'); return; }
+        try {
+          const resp = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, role, otp, newPassword })
+          });
+          const data = await resp.json();
+          if (!resp.ok) { showToast(data.error || 'Password reset failed', 'error'); return; }
+          showToast('Password updated – you can now log in', 'success');
+          modal.style.display = 'none';
+        } catch (e) { showToast('Network error', 'error'); }
+      });
+    </script>
+      </div>
+
+      <p class="demo-note">Members & trainers must be added by admin first</p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Role meta — each role has its own dashboard
+    const roleMeta = {
+      admin:   { label: 'Admin',   tag: 'System administration', redirect: 'index.html' },
+      trainer: { label: 'Trainer', tag: 'Clients & workouts',    redirect: 'trainer-dashboard.html' },
+      member:  { label: 'Member',  tag: 'Plans & progress',      redirect: 'member-dashboard.html' },
+    };
+
+    let selectedRole = 'admin';
+
+    // Role selection
+    document.getElementById('role-grid').addEventListener('click', (e) => {
+      const btn = e.target.closest('.role-btn');
+      if (!btn) return;
+      document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedRole = btn.dataset.role;
+      const meta = roleMeta[selectedRole];
+      document.getElementById('role-name').textContent = meta.label;
+      document.getElementById('role-tag').textContent  = meta.tag;
+    });
+
+    // Password toggle
+    document.getElementById('toggle-pw').addEventListener('click', () => {
+      const pw  = document.getElementById('password');
+      const ico = document.getElementById('eye-icon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        ico.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        pw.type = 'password';
+        ico.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+
+    // Toast helper
+    function showToast(msg, type = 'error') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type}`;
+      void t.offsetWidth;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3200);
+    }
+
+    // Form submit — calls the real API
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('btn-signin');
+
+      if (!email || !password) {
+        showToast('Please fill in all fields', 'error');
+        return;
+      }
+
+      // Show loading state
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> Signing in…';
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, role: selectedRole })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          showToast(data.error || 'Login failed', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'Sign in <i class="fa-solid fa-arrow-right"></i>';
+          return;
+        }
+
+        // Store user in localStorage and redirect
+        localStorage.setItem('fithub_user', JSON.stringify(data.user));
+        showToast('Welcome back, ' + data.user.name + '!', 'success');
+        setTimeout(() => {
+          window.location.href = roleMeta[selectedRole].redirect;
+        }, 600);
+      } catch (err) {
+        showToast('Connection error. Is the server running?', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Sign in <i class="fa-solid fa-arrow-right"></i>';
+      }
+    });
+  </script>
+</body>
+</html>

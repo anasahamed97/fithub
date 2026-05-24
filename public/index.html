@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FitHub - Modern Gym Management Dashboard with real-time statistics, member management, trainer schedules, and payment tracking.">
+  <title>FitHub - Premium Gym Management</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-dumbbell"></i>
+        </div>
+        <span class="brand-name">Fit<span>Hub</span></span>
+      </div>
+      
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-view="dashboard" id="nav-dashboard">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-view="members" id="nav-members">
+          <i class="fa-solid fa-users"></i>
+          <span>Members</span>
+        </a>
+        <a href="#" class="nav-item" data-view="attendance" id="nav-attendance">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>Attendance</span>
+        </a>
+        <a href="#" class="nav-item" data-view="trainers" id="nav-trainers">
+          <i class="fa-solid fa-user-shield"></i>
+          <span>Trainers</span>
+        </a>
+        <a href="#" class="nav-item" data-view="plans" id="nav-plans">
+          <i class="fa-solid fa-tags"></i>
+          <span>Plans & Billing</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="avatar">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="user-info">
+              <span class="name">Admin Panel</span>
+              <span class="role">Gym Owner</span>
+            </div>
+          </div>
+          <button id="btn-admin-logout" class="btn-icon" title="Logout" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='var(--color-pink)'" onmouseout="this.style.color='var(--text-muted)'">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar Header -->
+      <header class="topbar">
+        <div class="header-title">
+          <h1 id="view-title">Dashboard Overview</h1>
+          <p id="view-subtitle" class="subtitle">Welcome back! Here's what's happening at FitHub today.</p>
+        </div>
+        
+        <div class="header-actions">
+          <div class="time-display" id="digital-clock">00:00:00 AM</div>
+          <button class="btn btn-primary" id="btn-quick-checkin">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Quick Check-In</span>
+          </button>
+          <button class="btn btn-accent" id="btn-quick-member">
+            <i class="fa-solid fa-plus"></i>
+            <span>New Member</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEWS -->
+      
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="view-dashboard" class="content-view active">
+        <!-- Stats Cards Grid -->
+        <div class="stats-grid">
+          <div class="stat-card purple-glow">
+            <div class="card-body">
+              <div class="card-icon">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <div class="card-info">
+                <h3>Total Members</h3>
+                <p class="value" id="stat-total-members">-</p>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="trend up"><i class="fa-solid fa-arrow-up"></i> +12%</span> vs last month
+            </div>
+          </div>
+          
+          <div class="stat-card cyan-glow">
+            <div class="card-body">
+              <div class="card-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+              </div>
+              <div class="card-info">
+                <h3>Active Members</h3>
+                <p class="value" id="stat-active-members">-</p>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="trend up"><i class="fa-solid fa-arrow-up"></i> +5.4%</span> active rate
+            </div>
+          </div>
+
+          <div class="stat-card pink-glow">
+            <div class="card-body">
+              <div class="card-icon">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div class="card-info">
+                <h3>Today's Check-ins</h3>
+                <p class="value" id="stat-today-attendance">-</p>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="trend" id="stat-attendance-subtext">Members checked in today</span>
+            </div>
+          </div>
+
+          <div class="stat-card emerald-glow">
+            <div class="card-body">
+              <div class="card-icon">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+              <div class="card-info">
+                <h3>Monthly Revenue</h3>
+                <p class="value" id="stat-monthly-revenue">$0.00</p>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="trend up"><i class="fa-solid fa-arrow-up"></i> +8.2%</span> target progress
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h2><i class="fa-solid fa-chart-line accent-purple"></i> Revenue Trend (Last 6 Months)</h2>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-revenue" height="240"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card glass-panel">
+            <div class="chart-header">
+              <h2><i class="fa-solid fa-chart-pie accent-cyan"></i> Class & Check-in Distribution</h2>
+            </div>
+            <div class="chart-body">
+              <canvas id="chart-distribution" height="240"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Split Section -->
+        <div class="split-grid">
+          <!-- Recent Activity -->
+          <div class="glass-panel activity-panel">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-wave-square text-purple"></i> Recent Activity Log</h2>
+              <button class="btn btn-text" onclick="switchView('attendance')">View All</button>
+            </div>
+            <div class="activity-list" id="dashboard-recent-activity">
+              <!-- Dynamically populated -->
+              <div class="loading-state">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading activities...
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Attendance Quick-Check -->
+          <div class="glass-panel list-panel">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-clock-rotate-left text-cyan"></i> Today's Check-ins</h2>
+              <button class="btn btn-sm btn-primary-outline" id="btn-dashboard-checkin">Check-in Member</button>
+            </div>
+            <div class="table-container-compact">
+              <table class="compact-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Type</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-today-attendance">
+                  <!-- Dynamically populated -->
+                  <tr>
+                    <td colspan="3" class="text-center">No check-ins today yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. MEMBERS VIEW -->
+      <section id="view-members" class="content-view">
+        <div class="glass-panel table-panel">
+          <div class="table-header">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="member-search" placeholder="Search by name, email, phone...">
+            </div>
+            <div class="filter-actions">
+              <select id="member-filter-status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <select id="member-filter-plan" class="form-select">
+                <option value="">All Plans</option>
+                <!-- Dynamically populated -->
+              </select>
+              <button class="btn btn-primary" id="btn-add-member-trigger">
+                <i class="fa-solid fa-user-plus"></i> Add Member
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th>Member Name</th>
+                  <th>Contact Info</th>
+                  <th>Join Date</th>
+                  <th>Plan assigned</th>
+                  <th>Trainer</th>
+                  <th>Status</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="members-list-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ATTENDANCE VIEW -->
+      <section id="view-attendance" class="content-view">
+        <div class="split-grid-40-60">
+          <!-- Checkin Panel -->
+          <div class="glass-panel form-panel">
+            <div class="panel-header-sub">
+              <h2><i class="fa-solid fa-id-card text-cyan"></i> Check-in Member</h2>
+            </div>
+            <form id="attendance-checkin-form" class="responsive-form">
+              <div class="form-group">
+                <label for="checkin-member-select">Select Member *</label>
+                <select id="checkin-member-select" class="form-select select-searchable" required>
+                  <option value="" disabled selected>Choose a member...</option>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="checkin-type-select">Check-In Type / Class</label>
+                <select id="checkin-type-select" class="form-select">
+                  <option value="Gym Access">General Gym Access</option>
+                  <option value="HIIT Blast Class">HIIT Blast Class</option>
+                  <option value="Vinyasa Yoga Class">Vinyasa Yoga Class</option>
+                  <option value="Cardio Kickboxing Class">Cardio Kickboxing Class</option>
+                  <option value="Strength & Conditioning Clinic">Strength & Conditioning Clinic</option>
+                  <option value="Zumba Dance Session">Zumba Dance Session</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-cyan btn-full">
+                <i class="fa-solid fa-circle-check"></i> Process Check-In
+              </button>
+            </form>
+          </div>
+
+          <!-- Live Feed -->
+          <div class="glass-panel list-panel">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-rss text-purple"></i> Live Attendance Feed</h2>
+            </div>
+            <div class="table-container">
+              <table class="main-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Email</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Access Type</th>
+                  </tr>
+                </thead>
+                <tbody id="attendance-feed-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TRAINERS VIEW -->
+      <section id="view-trainers" class="content-view">
+        <div class="section-actions">
+          <div class="section-title-sub">Registered Staff & Instructors</div>
+          <button class="btn btn-primary" id="btn-add-trainer-trigger">
+            <i class="fa-solid fa-user-plus"></i> Add Trainer
+          </button>
+        </div>
+        
+        <div class="trainers-grid" id="trainers-grid-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- 5. PLANS VIEW -->
+      <section id="view-plans" class="content-view">
+        <div class="split-grid-60-40">
+          <!-- Plans Grid -->
+          <div>
+            <div class="section-actions-embedded">
+              <h2 class="sub-view-heading">Available Subscription Plans</h2>
+              <button class="btn btn-accent" id="btn-add-plan-trigger">
+                <i class="fa-solid fa-plus"></i> Create Custom Plan
+              </button>
+            </div>
+            <div class="plans-grid" id="plans-grid-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Billing & Payments Panel -->
+          <div class="glass-panel billing-panel">
+            <div class="panel-header">
+              <h2><i class="fa-solid fa-receipt text-emerald"></i> Recent Transactions</h2>
+              <button class="btn btn-sm btn-accent-outline" id="btn-record-payment-trigger">Record Payment</button>
+            </div>
+            <div class="table-container-scroll">
+              <table class="compact-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Method</th>
+                  </tr>
+                </thead>
+                <tbody id="billing-history-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- A. MEMBER ADD/EDIT MODAL -->
+  <div class="modal" id="modal-member">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2 id="member-modal-title">Add Gym Member</h2>
+        <button class="btn-close" id="btn-close-member-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="member-form" class="modal-form">
+          <input type="hidden" id="member-form-id">
+          
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="member-form-name">Full Name *</label>
+              <input type="text" id="member-form-name" required placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group col-6">
+              <label for="member-form-gender">Gender</label>
+              <select id="member-form-gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="member-form-email">Email Address *</label>
+              <input type="email" id="member-form-email" required placeholder="e.g. john@example.com">
+            </div>
+            <div class="form-group col-6">
+              <label for="member-form-phone">Phone Number *</label>
+              <input type="tel" id="member-form-phone" required placeholder="e.g. +1 (555) 000-0000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="member-form-password">Login Password (Optional - Defaults to 'changeme')</label>
+            <input type="password" id="member-form-password" placeholder="Set custom password for this member">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="member-form-plan">Membership Plan</label>
+              <select id="member-form-plan">
+                <option value="">No Subscription Plan</option>
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="form-group col-6">
+              <label for="member-form-trainer">Assigned Personal Trainer</label>
+              <select id="member-form-trainer">
+                <option value="">No Personal Trainer</option>
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="member-form-notes">Medical Notes & Workouts Focus</label>
+            <textarea id="member-form-notes" rows="3" placeholder="Injuries, goals, limitations..."></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-member-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-member">Save Member</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- B. TRAINER ADD MODAL -->
+  <div class="modal" id="modal-trainer">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2>Add Personal Trainer</h2>
+        <button class="btn-close" id="btn-close-trainer-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="trainer-form" class="modal-form">
+          <div class="form-group">
+            <label for="trainer-form-name">Full Name *</label>
+            <input type="text" id="trainer-form-name" required placeholder="e.g. Sarah Connor">
+          </div>
+          <div class="form-group">
+            <label for="trainer-form-specialty">Specialty *</label>
+            <input type="text" id="trainer-form-specialty" required placeholder="e.g. Strength Training, Yoga">
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="trainer-form-email">Email Address *</label>
+              <input type="email" id="trainer-form-email" required placeholder="trainer@fithub.com">
+            </div>
+            <div class="form-group col-6">
+              <label for="trainer-form-phone">Phone</label>
+              <input type="tel" id="trainer-form-phone" placeholder="+1 (555) 000-0000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="trainer-form-password">Login Password (Optional - Defaults to 'changeme')</label>
+            <input type="password" id="trainer-form-password" placeholder="Set custom password for this trainer">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-trainer-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Trainer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- C. PLAN ADD MODAL -->
+  <div class="modal" id="modal-plan">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2>Create Membership Plan</h2>
+        <button class="btn-close" id="btn-close-plan-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="plan-form" class="modal-form">
+          <div class="form-group">
+            <label for="plan-form-name">Plan Name *</label>
+            <input type="text" id="plan-form-name" required placeholder="e.g. Elite VIP Unlimited">
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="plan-form-price">Monthly Price ($ USD) *</label>
+              <input type="number" id="plan-form-price" min="0" required placeholder="59">
+            </div>
+            <div class="form-group col-6">
+              <label for="plan-form-duration">Duration (Months) *</label>
+              <input type="number" id="plan-form-duration" min="1" max="36" value="1" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="plan-form-features">Features list (separated by comma)</label>
+            <textarea id="plan-form-features" rows="2" placeholder="Sauna access, Group yoga classes, Towel service"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-plan-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Plan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- D. RECORD PAYMENT MODAL -->
+  <div class="modal" id="modal-payment">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2>Record Payment Transaction</h2>
+        <button class="btn-close" id="btn-close-payment-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="payment-form" class="modal-form">
+          <div class="form-group">
+            <label for="payment-form-member">Select Member *</label>
+            <select id="payment-form-member" required>
+              <option value="" disabled selected>Choose a member...</option>
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="payment-form-plan">Billing Plan *</label>
+              <select id="payment-form-plan" required>
+                <option value="" disabled selected>Choose plan...</option>
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="form-group col-6">
+              <label for="payment-form-amount">Amount Charged ($) *</label>
+              <input type="number" id="payment-form-amount" min="0" required placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="payment-form-method">Payment Method</label>
+            <select id="payment-form-method">
+              <option value="Card">Credit/Debit Card</option>
+              <option value="UPI">UPI / Digital Wallet</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Direct Bank Transfer</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-payment-modal">Cancel</button>
+            <button type="submit" class="btn btn-emerald">Record Payment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- E. MEMBER PROFILE DETAILS MODAL -->
+  <div class="modal" id="modal-profile">
+    <div class="modal-content glass-panel-modal profile-modal-width">
+      <div class="modal-header">
+        <h2>Member Profile Summary</h2>
+        <button class="btn-close" id="btn-close-profile-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="profile-modal-body">
+        <!-- Dynamically populated profile tabs and grids -->
+      </div>
+    </div>
+  </div>
+
+  <!-- F. QUICK CHECK-IN MODAL (for header button) -->
+  <div class="modal" id="modal-quick-checkin">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2>Quick Member Check-In</h2>
+        <button class="btn-close" id="btn-close-quick-checkin-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="quick-checkin-form" class="modal-form">
+          <div class="form-group">
+            <label for="quick-checkin-member">Select Member *</label>
+            <select id="quick-checkin-member" required>
+              <option value="" disabled selected>Choose member...</option>
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quick-checkin-type">Class / Access Type</label>
+            <select id="quick-checkin-type">
+              <option value="Gym Access">General Gym Access</option>
+              <option value="HIIT Blast Class">HIIT Blast Class</option>
+              <option value="Vinyasa Yoga Class">Vinyasa Yoga Class</option>
+              <option value="Cardio Kickboxing Class">Cardio Kickboxing Class</option>
+              <option value="Strength & Conditioning Clinic">Strength & Conditioning Clinic</option>
+              <option value="Zumba Dance Session">Zumba Dance Session</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-quick-checkin-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Check-In Member</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Javascript Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
