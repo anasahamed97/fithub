@@ -626,6 +626,47 @@ app.get('/api/me/trainer', async (req, res) => {
   }
 });
 
+// Admin-only: Equipment management
+app.get('/api/equipment', requireAdmin, async (req, res) => {
+  try {
+    const equipment = await db.getEquipments();
+    res.json(equipment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/equipment', requireAdmin, async (req, res) => {
+  try {
+    const { name, status, notes } = req.body;
+    if (!name) return res.status(400).json({ error: 'Equipment name is required' });
+    const newEq = await db.addEquipment({ name, status, notes });
+    res.status(201).json(newEq);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/equipment/:id', requireAdmin, async (req, res) => {
+  try {
+    const updated = await db.updateEquipment(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ error: 'Equipment not found' });
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/equipment/:id', requireAdmin, async (req, res) => {
+  try {
+    const success = await db.deleteEquipment(req.params.id);
+    if (!success) return res.status(404).json({ error: 'Equipment not found' });
+    res.json({ success: true, message: 'Equipment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Change own password (member or trainer)
 app.put('/api/me/password', async (req, res) => {
   try {
@@ -661,10 +702,10 @@ app.listen(PORT, () => {
   console.log(`  FitHub Gym Management server running successfully!`);
   console.log(`  Local Endpoint: http://localhost:${PORT}`);
   if (!db.isConfigured) {
-    console.log(`  WARNING: Supabase connection parameters are empty!`);
-    console.log(`  Please fill in URL/Key in your project .env file.`);
+    console.log(`  WARNING: MySQL connection parameters are empty!`);
+    console.log(`  Please ensure MYSQL_HOST, USER, PASSWORD, DATABASE are set in your .env file.`);
   } else {
-    console.log(`  Database Provider: Supabase SQL Postgres instance`);
+    console.log(`  Database Provider: MySQL`);
   }
   console.log(`==================================================`);
 });

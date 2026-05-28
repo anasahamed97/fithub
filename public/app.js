@@ -28,6 +28,7 @@ let state = {
   trainers: [],
   attendance: [],
   payments: [],
+  equipment: [],
   activeView: 'dashboard'
 };
 
@@ -66,12 +67,13 @@ function initClock() {
 // 2. DATA ORCHESTRATOR
 async function loadAllData() {
   try {
-    const [membersRes, plansRes, trainersRes, attendanceRes, paymentsRes] = await Promise.all([
+    const [membersRes, plansRes, trainersRes, attendanceRes, paymentsRes, equipmentRes] = await Promise.all([
       fetch(`${API_URL}/members`),
       fetch(`${API_URL}/plans`),
       fetch(`${API_URL}/trainers`),
       fetch(`${API_URL}/attendance`),
-      fetch(`${API_URL}/payments`)
+      fetch(`${API_URL}/payments`),
+      fetch(`${API_URL}/equipment`)
     ]);
 
     state.members = await membersRes.json();
@@ -79,6 +81,7 @@ async function loadAllData() {
     state.trainers = await trainersRes.json();
     state.attendance = await attendanceRes.json();
     state.payments = await paymentsRes.json();
+    state.equipment = await equipmentRes.json();
 
     // Populate selects dropdowns throughout the app
     populateDropdowns();
@@ -158,6 +161,10 @@ function switchView(viewName) {
     viewTitle.textContent = "Membership Plans & Billing";
     viewSubtitle.textContent = "Define subscriptions package levels and audit payment logs.";
     loadPlansView();
+  } else if (viewName === 'equipment') {
+    viewTitle.textContent = "Gym Equipment & Maintenance";
+    viewSubtitle.textContent = "Monitor mechanical status, schedule servicing, and log notes for assets.";
+    loadEquipmentView();
   }
 }
 
@@ -269,7 +276,7 @@ function loadMembersView(membersData = state.members) {
           <div class="member-cell-initials">${initials}</div>
           <div>
             <strong class="clickable" onclick="viewMemberProfile('${member.id}')" style="cursor: pointer; hover: underline;">${member.name}</strong>
-            <div style="font-size: 0.75rem; color: var(--text-muted)">ID: ${member.id.substring(0, 8)}...</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted)">ID: ${member.id}</div>
           </div>
         </div>
       </td>
@@ -359,6 +366,9 @@ function loadTrainersView() {
         </div>
       </div>
       <div style="margin-top: 20px; width: 100%; display: flex; gap: 8px;">
+        <button class="btn btn-sm btn-primary-outline btn-full" onclick="editTrainer('${t.id}')">
+          <i class="fa-solid fa-pen"></i> Edit
+        </button>
         <button class="btn btn-sm btn-secondary btn-full" onclick="deleteTrainer('${t.id}')">
           <i class="fa-solid fa-trash"></i> Remove
         </button>
@@ -578,7 +588,7 @@ function renderDistributionChart(distData) {
 
 // MEMBERS CRUD
 function editMember(id) {
-  const member = state.members.find(m => m.id === id);
+  const member = state.members.find(m => m.id == id);
   if (!member) return;
 
   document.getElementById('member-modal-title').textContent = "Edit Member Profile";
@@ -742,6 +752,21 @@ async function deleteTrainer(id) {
   }
 }
 
+function editTrainer(id) {
+  const trainer = state.trainers.find(t => t.id == id);
+  if (!trainer) return;
+
+  document.getElementById('trainer-modal-title').textContent = "Edit Personal Trainer";
+  document.getElementById('trainer-form-id').value = trainer.id;
+  document.getElementById('trainer-form-name').value = trainer.name;
+  document.getElementById('trainer-form-specialty').value = trainer.specialty;
+  document.getElementById('trainer-form-email').value = trainer.email;
+  document.getElementById('trainer-form-phone').value = trainer.phone || '';
+  document.getElementById('trainer-form-password').value = '';
+
+  openModal('modal-trainer');
+}
+
 // PLANS CRUD
 async function deletePlan(id) {
   if (!confirm("Are you sure you want to delete this plan? Members currently assigned to this plan will remain registered, but their assigned plan will be reset.")) return;
@@ -819,6 +844,8 @@ function setupEventListeners() {
 
   document.getElementById('btn-add-trainer-trigger').addEventListener('click', () => {
     document.getElementById('trainer-form').reset();
+    document.getElementById('trainer-form-id').value = '';
+    document.getElementById('trainer-modal-title').textContent = "Add Personal Trainer";
     openModal('modal-trainer');
   });
 
@@ -830,6 +857,13 @@ function setupEventListeners() {
   document.getElementById('btn-record-payment-trigger').addEventListener('click', () => {
     document.getElementById('payment-form').reset();
     openModal('modal-payment');
+  });
+
+  document.getElementById('btn-add-equipment-trigger').addEventListener('click', () => {
+    document.getElementById('equipment-form').reset();
+    document.getElementById('equipment-form-id').value = '';
+    document.getElementById('equipment-modal-title').textContent = "Add Gym Equipment";
+    openModal('modal-equipment');
   });
 
   // Modal close listeners
@@ -844,7 +878,9 @@ function setupEventListeners() {
     { btn: 'btn-cancel-payment-modal', modal: 'modal-payment' },
     { btn: 'btn-close-profile-modal', modal: 'modal-profile' },
     { btn: 'btn-close-quick-checkin-modal', modal: 'modal-quick-checkin' },
-    { btn: 'btn-cancel-quick-checkin-modal', modal: 'modal-quick-checkin' }
+    { btn: 'btn-cancel-quick-checkin-modal', modal: 'modal-quick-checkin' },
+    { btn: 'btn-close-equipment-modal', modal: 'modal-equipment' },
+    { btn: 'btn-cancel-equipment-modal', modal: 'modal-equipment' }
   ];
 
   closeMappings.forEach(mapping => {
@@ -910,10 +946,11 @@ function setupEventListeners() {
     }
   });
 
-  // B. TRAINER SUBMISSION
+  // B. TRAINER SUBMISSION (ADD or EDIT)
   document.getElementById('trainer-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const id = document.getElementById('trainer-form-id').value;
     const payload = {
       name: document.getElementById('trainer-form-name').value,
       specialty: document.getElementById('trainer-form-specialty').value,
@@ -926,21 +963,25 @@ function setupEventListeners() {
       payload.password = password;
     }
 
+    const isEdit = !!id;
+    const url = isEdit ? `${API_URL}/trainers/${id}` : `${API_URL}/trainers`;
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-      const res = await fetch(`${API_URL}/trainers`, {
-        method: 'POST',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (res.ok) {
-        showToast("New trainer registered successfully.", "success");
+        showToast(isEdit ? "Trainer profile updated." : "New trainer registered successfully.", "success");
         closeModal('modal-trainer');
         await loadAllData();
         if (state.activeView === 'trainers') loadTrainersView();
       } else {
-        showToast(data.error || "Error creating trainer profile.", "error");
+        showToast(data.error || "Error processing trainer profile.", "error");
       }
     } catch (err) {
       showToast("Server communication error", "error");
@@ -1047,6 +1088,142 @@ function setupEventListeners() {
   document.getElementById('member-search').addEventListener('input', runMemberFilters);
   document.getElementById('member-filter-status').addEventListener('change', runMemberFilters);
   document.getElementById('member-filter-plan').addEventListener('change', runMemberFilters);
+
+  // Equipment search input live
+  document.getElementById('equipment-search').addEventListener('input', runEquipmentFilters);
+  document.getElementById('equipment-filter-status').addEventListener('change', runEquipmentFilters);
+
+  // F. EQUIPMENT SUBMISSION (ADD or EDIT)
+  document.getElementById('equipment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('equipment-form-id').value;
+    const payload = {
+      name: document.getElementById('equipment-form-name').value,
+      status: document.getElementById('equipment-form-status').value,
+      notes: document.getElementById('equipment-form-notes').value
+    };
+
+    const isEdit = !!id;
+    const url = isEdit ? `${API_URL}/equipment/${id}` : `${API_URL}/equipment`;
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        showToast(isEdit ? "Equipment status updated." : "New equipment registered successfully.", "success");
+        closeModal('modal-equipment');
+        await loadAllData();
+        if (state.activeView === 'equipment') loadEquipmentView();
+      } else {
+        showToast(data.error || "Failed to process equipment form", "error");
+      }
+    } catch (err) {
+      showToast("Network error submitting equipment details", "error");
+    }
+  });
+}
+
+function loadEquipmentView(eqData = state.equipment) {
+  const tbody = document.getElementById('equipment-list-tbody');
+  tbody.innerHTML = '';
+
+  if (eqData.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted">No equipment found matching filters.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  eqData.forEach(eq => {
+    let statusBadgeClass = 'badge-active';
+    if (eq.status === 'Under Maintenance') {
+      statusBadgeClass = 'badge-pending';
+    } else if (eq.status === 'Out of Service') {
+      statusBadgeClass = 'badge-inactive';
+    }
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <strong>${eq.name}</strong>
+        <div style="font-size: 0.75rem; color: var(--text-muted)">ID: ${eq.id}</div>
+      </td>
+      <td><span class="badge ${statusBadgeClass}">${eq.status}</span></td>
+      <td>${eq.notes || '<span class="text-muted">No issues or notes.</span>'}</td>
+      <td class="text-right">
+        <div class="action-row">
+          <button class="btn-icon edit" onclick="editEquipment('${eq.id}')" title="Edit Equipment">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <button class="btn-icon delete" onclick="deleteEquipment('${eq.id}')" title="Remove Equipment">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function editEquipment(id) {
+  const eq = state.equipment.find(e => e.id == id);
+  if (!eq) return;
+
+  document.getElementById('equipment-modal-title').textContent = "Edit Gym Equipment";
+  document.getElementById('equipment-form-id').value = eq.id;
+  document.getElementById('equipment-form-name').value = eq.name;
+  document.getElementById('equipment-form-status').value = eq.status || 'Operational';
+  document.getElementById('equipment-form-notes').value = eq.notes || '';
+
+  openModal('modal-equipment');
+}
+
+async function deleteEquipment(id) {
+  if (!confirm("Are you sure you want to remove this equipment from the registry?")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/equipment/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    
+    if (res.ok) {
+      showToast("Equipment removed successfully.", "success");
+      await loadAllData();
+      loadEquipmentView();
+    } else {
+      showToast(data.error || "Failed to delete equipment.", "error");
+    }
+  } catch (error) {
+    showToast("Server error during deletion", "error");
+  }
+}
+
+function runEquipmentFilters() {
+  const query = document.getElementById('equipment-search').value.toLowerCase();
+  const status = document.getElementById('equipment-filter-status').value;
+
+  let filtered = state.equipment;
+
+  if (query) {
+    filtered = filtered.filter(eq => 
+      eq.name.toLowerCase().includes(query) ||
+      (eq.notes && eq.notes.toLowerCase().includes(query))
+    );
+  }
+
+  if (status) {
+    filtered = filtered.filter(eq => eq.status === status);
+  }
+
+  loadEquipmentView(filtered);
 }
 
 // Attendance processing helper

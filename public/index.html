@@ -50,6 +50,10 @@
           <i class="fa-solid fa-tags"></i>
           <span>Plans & Billing</span>
         </a>
+        <a href="#" class="nav-item" data-view="equipment" id="nav-equipment">
+          <i class="fa-solid fa-screwdriver-wrench"></i>
+          <span>Equipment</span>
+        </a>
       </nav>
       
       <div class="sidebar-footer">
@@ -384,6 +388,44 @@
           </div>
         </div>
       </section>
+
+      <!-- 6. EQUIPMENT VIEW -->
+      <section id="view-equipment" class="content-view">
+        <div class="glass-panel table-panel">
+          <div class="table-header">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="equipment-search" placeholder="Search equipment by name, status...">
+            </div>
+            <div class="filter-actions">
+              <select id="equipment-filter-status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Operational">Operational</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+                <option value="Out of Service">Out of Service</option>
+              </select>
+              <button class="btn btn-primary" id="btn-add-equipment-trigger">
+                <i class="fa-solid fa-plus"></i> Add Equipment
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="main-table">
+              <thead>
+                <tr>
+                  <th>Equipment Name</th>
+                  <th>Status</th>
+                  <th>Notes / Details</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="equipment-list-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
     </main>
   </div>
 
@@ -466,11 +508,12 @@
   <div class="modal" id="modal-trainer">
     <div class="modal-content glass-panel-modal">
       <div class="modal-header">
-        <h2>Add Personal Trainer</h2>
+        <h2 id="trainer-modal-title">Add Personal Trainer</h2>
         <button class="btn-close" id="btn-close-trainer-modal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="trainer-form" class="modal-form">
+          <input type="hidden" id="trainer-form-id">
           <div class="form-group">
             <label for="trainer-form-name">Full Name *</label>
             <input type="text" id="trainer-form-name" required placeholder="e.g. Sarah Connor">
@@ -629,6 +672,45 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="btn-cancel-quick-checkin-modal">Cancel</button>
             <button type="submit" class="btn btn-primary">Check-In Member</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- G. EQUIPMENT ADD/EDIT MODAL -->
+  <div class="modal" id="modal-equipment">
+    <div class="modal-content glass-panel-modal">
+      <div class="modal-header">
+        <h2 id="equipment-modal-title">Add Gym Equipment</h2>
+        <button class="btn-close" id="btn-close-equipment-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="equipment-form" class="modal-form">
+          <input type="hidden" id="equipment-form-id">
+          
+          <div class="form-group">
+            <label for="equipment-form-name">Equipment Name *</label>
+            <input type="text" id="equipment-form-name" required placeholder="e.g. Treadmill Pro T80">
+          </div>
+
+          <div class="form-group">
+            <label for="equipment-form-status">Status</label>
+            <select id="equipment-form-status" class="form-select">
+              <option value="Operational">Operational</option>
+              <option value="Under Maintenance">Under Maintenance</option>
+              <option value="Out of Service">Out of Service</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="equipment-form-notes">Maintenance Notes / Issues</label>
+            <textarea id="equipment-form-notes" rows="3" placeholder="Describe any current issues or maintenance schedules..."></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-equipment-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-equipment">Save Equipment</button>
           </div>
         </form>
       </div>

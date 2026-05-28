@@ -1,20 +1,34 @@
-// Supabase Database Connection Layer
 require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
-const { createClient } = require('@supabase/supabase-js');
+const mysql = require('mysql2/promise');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const MYSQL_HOST = process.env.MYSQL_HOST || 'localhost';
+const MYSQL_PORT = process.env.MYSQL_PORT || '3306';
+const MYSQL_USER = process.env.MYSQL_USER || 'root';
+const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD || '';
+const MYSQL_DATABASE = process.env.MYSQL_DATABASE || 'fithub';
 
-// Check if credentials are set up
-const isConfigured = supabaseUrl && supabaseKey;
+const isConfigured = MYSQL_HOST && MYSQL_USER && MYSQL_PASSWORD && MYSQL_DATABASE;
 
-let supabase = null;
+let pool = null;
 if (isConfigured) {
-  const key = process.env.SUPABASE_SERVICE_ROLE || supabaseKey;
-  supabase = createClient(supabaseUrl, key);
+  pool = mysql.createPool({
+    host: MYSQL_HOST,
+    port: MYSQL_PORT,
+    user: MYSQL_USER,
+    password: MYSQL_PASSWORD,
+    database: MYSQL_DATABASE,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  });
 }
 
-// Data Mappers to translate Postgres snake_case column names into frontend camelCase format
+async function query(sql, params = []) {
+  if (!pool) throw new Error('Database not configured');
+  const [rows] = await pool.execute(sql, params);
+  return rows;
+}
+
 function mapMember(m) {
   if (!m) return null;
   return {
@@ -28,9 +42,9 @@ function mapMember(m) {
     trainerId: m.trainer_id,
     gender: m.gender,
     notes: m.notes,
-    planName: m.plan ? m.plan.name : 'No Plan Assigned',
-    planPrice: m.plan ? m.plan.price : 0,
-    trainerName: m.trainer ? m.trainer.name : 'No Trainer Assigned'
+    planName: m.plan_name,
+    planPrice: m.plan_price,
+    trainerName: m.trainer_name
   };
 }
 
@@ -40,10 +54,10 @@ function mapAttendance(a) {
     id: a.id,
     memberId: a.member_id,
     date: a.date,
-    time: a.time ? a.time.substring(0, 5) : '',
+    time: a.time ? a.time.substring(0,5) : '',
     checkInType: a.check_in_type,
-    memberName: a.member ? a.member.name : 'Unknown Member',
-    memberEmail: a.member ? a.member.email : ''
+    memberName: a.member_name,
+    memberEmail: a.member_email
   };
 }
 
@@ -57,579 +71,289 @@ function mapPayment(p) {
     date: p.date,
     paymentMethod: p.payment_method,
     status: p.status,
-    memberName: p.member ? p.member.name : 'Unknown Member',
-    planName: p.plan ? p.plan.name : 'Custom Plan'
+    memberName: p.member_name,
+    planName: p.plan_name
   };
 }
 
-// DB Helpers for CRUD Operations (Promises based)
 const db = {
   isConfigured,
 
-  // --- AUTHENTICATION ---
+  // AUTHENTICATION
   authenticateMember: async (email, password) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('members')
-      .select(`
-        *,
-        plan:plan_id (name, price),
-        trainer:trainer_id (name)
-      `)
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) return null;
-
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      role: 'member',
-      status: data.status,
-      planName: data.plan ? data.plan.name : 'No Plan',
-      trainerName: data.trainer ? data.trainer.name : 'No Trainer'
-    };
+    const rows = await query('SELECT m.*, p.name AS plan_name, p.price AS plan_price, t.name AS trainer_name FROM members m LEFT JOIN plans p ON m.plan_id = p.id LEFT JOIN trainers t ON m.trainer_id = t.id WHERE m.email = ? AND m.password = ?', [email, password]);
+    if (rows.length === 0) return null;
+    const data = rows[0];
+    return { id: data.id, name: data.name, email: data.email, role: 'member', status: data.status, planName: data.plan_name || 'No Plan', trainerName: data.trainer_name || 'No Trainer' };
   },
 
   authenticateTrainer: async (email, password) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) return null;
-
-    return {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      role: 'trainer',
-      specialty: data.specialty,
-      status: data.status
-    };
+    const rows = await query('SELECT * FROM trainers WHERE email = ? AND password = ?', [email, password]);
+    if (rows.length === 0) return null;
+    const data = rows[0];
+    return { id: data.id, name: data.name, email: data.email, role: 'trainer', specialty: data.specialty, status: data.status };
   },
 
-  // --- MEMBERS ---
+  // MEMBERS
   getMembers: async () => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('members')
-      .select(`
-        *,
-        plan:plan_id (name, price),
-        trainer:trainer_id (name)
-      `)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data.map(mapMember);
+    const rows = await query('SELECT m.*, p.name AS plan_name, p.price AS plan_price, t.name AS trainer_name FROM members m LEFT JOIN plans p ON m.plan_id = p.id LEFT JOIN trainers t ON m.trainer_id = t.id ORDER BY m.name ASC');
+    return rows.map(mapMember);
   },
 
   getMemberById: async (id) => {
     if (!isConfigured) return null;
-
-    const { data: member, error: memberErr } = await supabase
-      .from('members')
-      .select(`
-        *,
-        plan:plan_id (name, price),
-        trainer:trainer_id (name)
-      `)
-      .eq('id', id)
-      .maybeSingle();
-
-    if (memberErr) throw memberErr;
-    if (!member) return null;
-
-    // Get attendance logs
-    const { data: attendance, error: attErr } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('member_id', id)
-      .order('date', { ascending: false })
-      .order('time', { ascending: false });
-
-    if (attErr) throw attErr;
-
-    // Get payments logs
-    const { data: payments, error: payErr } = await supabase
-      .from('payments')
-      .select(`
-        *,
-        plan:plan_id (name)
-      `)
-      .eq('member_id', id)
-      .order('date', { ascending: false });
-
-    if (payErr) throw payErr;
-
-    return {
-      profile: mapMember(member),
-      attendance: attendance.map(a => ({
-        id: a.id,
-        memberId: a.member_id,
-        date: a.date,
-        time: a.time ? a.time.substring(0, 5) : '',
-        checkInType: a.check_in_type
-      })),
-      payments: payments.map(p => ({
-        id: p.id,
-        memberId: p.member_id,
-        planId: p.plan_id,
-        amount: Number(p.amount),
-        date: p.date,
-        paymentMethod: p.payment_method,
-        status: p.status,
-        planName: p.plan ? p.plan.name : 'Subscription Payment'
-      }))
-    };
+    const rows = await query('SELECT m.*, p.name AS plan_name, p.price AS plan_price, t.name AS trainer_name FROM members m LEFT JOIN plans p ON m.plan_id = p.id LEFT JOIN trainers t ON m.trainer_id = t.id WHERE m.id = ?', [id]);
+    if (rows.length === 0) return null;
+    const member = rows[0];
+    const attendance = await query('SELECT a.*, m.name AS member_name FROM attendance a JOIN members m ON a.member_id = m.id WHERE a.member_id = ? ORDER BY a.date DESC, a.time DESC', [id]);
+    const payments = await query('SELECT p.*, m.name AS member_name, pl.name AS plan_name FROM payments p JOIN members m ON p.member_id = m.id LEFT JOIN plans pl ON p.plan_id = pl.id WHERE p.member_id = ? ORDER BY p.date DESC', [id]);
+    return { profile: mapMember(member), attendance: attendance.map(mapAttendance), payments: payments.map(mapPayment) };
   },
 
-  // Get member profile by email (for member dashboard)
   getMemberByEmail: async (email) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('members')
-      .select(`
-        *,
-        plan:plan_id (name, price),
-        trainer:trainer_id (name)
-      `)
-      .eq('email', email)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) return null;
-    return mapMember(data);
+    const rows = await query('SELECT m.*, p.name AS plan_name, p.price AS plan_price, t.name AS trainer_name FROM members m LEFT JOIN plans p ON m.plan_id = p.id LEFT JOIN trainers t ON m.trainer_id = t.id WHERE m.email = ?', [email]);
+    if (rows.length === 0) return null;
+    return mapMember(rows[0]);
   },
 
   addMember: async (memberData) => {
     if (!isConfigured) return null;
-
-    const insertData = {
-      name: memberData.name,
-      email: memberData.email,
-      phone: memberData.phone,
-      password: memberData.password || 'changeme',
-      plan_id: memberData.planId || null,
-      trainer_id: memberData.trainerId || null,
-      gender: memberData.gender || 'Other',
-      notes: memberData.notes || '',
-      status: memberData.status || 'Active'
-    };
-
-    const { data, error } = await supabase
-      .from('members')
-      .insert([insertData])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return mapMember(data);
+    const { name, email, phone, password, planId, trainerId, gender, notes, status } = memberData;
+    const result = await query('INSERT INTO members (name, email, phone, password, plan_id, trainer_id, gender, notes, status) VALUES (?,?,?,?,?,?,?,?,?)', [name, email, phone, password || "changeme", planId || null, trainerId || null, gender || "Other", notes || "", status || "Active"]);
+    const rows = await query('SELECT * FROM members WHERE id = ?', [result.insertId]);
+    return mapMember(rows[0]);
   },
 
   updateMember: async (id, updateData) => {
     if (!isConfigured) return null;
-
-    const mappedUpdate = {};
-    if (updateData.name !== undefined) mappedUpdate.name = updateData.name;
-    if (updateData.email !== undefined) mappedUpdate.email = updateData.email;
-    if (updateData.phone !== undefined) mappedUpdate.phone = updateData.phone;
-    if (updateData.password !== undefined) mappedUpdate.password = updateData.password;
-    if (updateData.gender !== undefined) mappedUpdate.gender = updateData.gender;
-    if (updateData.notes !== undefined) mappedUpdate.notes = updateData.notes;
-    if (updateData.status !== undefined) mappedUpdate.status = updateData.status;
-    if (updateData.planId !== undefined) mappedUpdate.plan_id = updateData.planId || null;
-    if (updateData.trainerId !== undefined) mappedUpdate.trainer_id = updateData.trainerId || null;
-
-    const { data, error } = await supabase
-      .from('members')
-      .update(mappedUpdate)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return mapMember(data);
+    const dbFields = {
+      name: 'name',
+      gender: 'gender',
+      email: 'email',
+      phone: 'phone',
+      planId: 'plan_id',
+      trainerId: 'trainer_id',
+      notes: 'notes',
+      password: 'password',
+      status: 'status'
+    };
+    const fields = [];
+    const params = [];
+    for (const [key, value] of Object.entries(updateData)) {
+      const dbKey = dbFields[key] || key;
+      fields.push(`${dbKey} = ?`);
+      params.push(value === '' ? null : value);
+    }
+    if (fields.length === 0) return null;
+    params.push(id);
+    await query(`UPDATE members SET ${fields.join(', ')} WHERE id = ?`, params);
+    const rows = await query('SELECT * FROM members WHERE id = ?', [id]);
+    return mapMember(rows[0]);
   },
 
   deleteMember: async (id) => {
     if (!isConfigured) return false;
-
-    const { error } = await supabase
-      .from('members')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    return true;
+    const result = await query('DELETE FROM members WHERE id = ?', [id]);
+    return result.affectedRows > 0;
   },
 
-  // --- PLANS ---
+  // PLANS
   getPlans: async () => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('plans')
-      .select('*')
-      .order('price', { ascending: true });
-
-    if (error) throw error;
-    return data;
+    return await query('SELECT * FROM plans ORDER BY price ASC');
   },
 
   getPlanById: async (id) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('plans')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
+    const rows = await query('SELECT * FROM plans WHERE id = ?', [id]);
+    return rows[0] || null;
   },
 
   addPlan: async (planData) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('plans')
-      .insert([{
-        name: planData.name,
-        price: Number(planData.price),
-        duration: Number(planData.duration),
-        features: planData.features || []
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const { name, price, duration, features } = planData;
+    const result = await query('INSERT INTO plans (name, price, duration, features) VALUES (?,?,?,?)', [name, Number(price), Number(duration), JSON.stringify(features || [])]);
+    return await db.getPlanById(result.insertId);
   },
 
   updatePlan: async (id, updateData) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('plans')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const fields = [];
+    const params = [];
+    for (const [key, value] of Object.entries(updateData)) {
+      fields.push(`${key} = ?`);
+      params.push(value);
+    }
+    if (fields.length === 0) return null;
+    params.push(id);
+    await query(`UPDATE plans SET ${fields.join(', ')} WHERE id = ?`, params);
+    return await db.getPlanById(id);
   },
 
   deletePlan: async (id) => {
     if (!isConfigured) return false;
-
-    const { error } = await supabase
-      .from('plans')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    return true;
+    const result = await query('DELETE FROM plans WHERE id = ?', [id]);
+    return result.affectedRows > 0;
   },
 
-  // --- TRAINERS ---
+  // TRAINERS
   getTrainers: async () => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data;
+    return await query('SELECT * FROM trainers ORDER BY name ASC');
   },
 
   getTrainerById: async (id) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
+    const rows = await query('SELECT * FROM trainers WHERE id = ?', [id]);
+    return rows[0] || null;
   },
 
-  // Get trainer profile by email (for trainer dashboard)
   getTrainerByEmail: async (email) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  },
-
-  // Get members assigned to a specific trainer
-  getMembersByTrainer: async (trainerId) => {
-    if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('members')
-      .select(`
-        *,
-        plan:plan_id (name, price),
-        trainer:trainer_id (name)
-      `)
-      .eq('trainer_id', trainerId)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data.map(mapMember);
+    const rows = await query('SELECT * FROM trainers WHERE email = ?', [email]);
+    return rows[0] || null;
   },
 
   addTrainer: async (trainerData) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .insert([{
-        name: trainerData.name,
-        specialty: trainerData.specialty,
-        phone: trainerData.phone || '',
-        email: trainerData.email || '',
-        password: trainerData.password || 'changeme',
-        status: trainerData.status || 'Active'
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const { name, specialty, phone, email, password, status } = trainerData;
+    const result = await query('INSERT INTO trainers (name, specialty, phone, email, password, status) VALUES (?,?,?,?,?,?)', [name, specialty, phone || "", email || "", password || "changeme", status || "Active"]);
+    return await db.getTrainerById(result.insertId);
   },
 
   updateTrainer: async (id, updateData) => {
     if (!isConfigured) return null;
-
-    const mappedUpdate = {};
-    if (updateData.name !== undefined) mappedUpdate.name = updateData.name;
-    if (updateData.specialty !== undefined) mappedUpdate.specialty = updateData.specialty;
-    if (updateData.phone !== undefined) mappedUpdate.phone = updateData.phone;
-    if (updateData.email !== undefined) mappedUpdate.email = updateData.email;
-    if (updateData.password !== undefined) mappedUpdate.password = updateData.password;
-    if (updateData.status !== undefined) mappedUpdate.status = updateData.status;
-
-    const { data, error } = await supabase
-      .from('trainers')
-      .update(mappedUpdate)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const fields = [];
+    const params = [];
+    for (const [key, value] of Object.entries(updateData)) {
+      fields.push(`${key} = ?`);
+      params.push(value);
+    }
+    if (fields.length === 0) return null;
+    params.push(id);
+    await query(`UPDATE trainers SET ${fields.join(', ')} WHERE id = ?`, params);
+    return await db.getTrainerById(id);
   },
 
   deleteTrainer: async (id) => {
     if (!isConfigured) return false;
-
-    const { error } = await supabase
-      .from('trainers')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    return true;
+    const result = await query('DELETE FROM trainers WHERE id = ?', [id]);
+    return result.affectedRows > 0;
   },
+// Get members assigned to a specific trainer
+getMembersByTrainer: async (trainerId) => {
+  if (!isConfigured) return [];
+  const rows = await query('SELECT m.*, p.name AS plan_name, p.price AS plan_price, t.name AS trainer_name FROM members m LEFT JOIN plans p ON m.plan_id = p.id LEFT JOIN trainers t ON m.trainer_id = t.id WHERE m.trainer_id = ? ORDER BY m.name ASC', [trainerId]);
+  return rows.map(mapMember);
+},
 
-  // --- ATTENDANCE ---
+  // ATTENDANCE
   getAttendance: async () => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('attendance')
-      .select(`
-        *,
-        member:member_id (name, email)
-      `)
-      .order('date', { ascending: false })
-      .order('time', { ascending: false });
-
-    if (error) throw error;
-    return data.map(mapAttendance);
+    const rows = await query('SELECT a.*, m.name AS member_name, m.email AS member_email FROM attendance a JOIN members m ON a.member_id = m.id ORDER BY a.date DESC, a.time DESC');
+    return rows.map(mapAttendance);
   },
 
-  // Get attendance for a specific member
   getAttendanceByMember: async (memberId) => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('member_id', memberId)
-      .order('date', { ascending: false })
-      .order('time', { ascending: false })
-      .limit(30);
-
-    if (error) throw error;
-    return data.map(a => ({
-      id: a.id,
-      memberId: a.member_id,
-      date: a.date,
-      time: a.time ? a.time.substring(0, 5) : '',
-      checkInType: a.check_in_type
-    }));
+    const rows = await query('SELECT * FROM attendance WHERE member_id = ? ORDER BY date DESC, time DESC LIMIT 30', [memberId]);
+    return rows.map(mapAttendance);
   },
 
   checkInMember: async (memberId, checkInType) => {
     if (!isConfigured) return null;
-
     const now = new Date();
-    const { data, error } = await supabase
-      .from('attendance')
-      .insert([{
-        member_id: memberId,
-        date: now.toISOString().split('T')[0],
-        time: now.toTimeString().split(' ')[0],
-        check_in_type: checkInType || 'Gym Access'
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0];
+    const result = await query('INSERT INTO attendance (member_id, date, time, check_in_type) VALUES (?,?,?,?)', [memberId, dateStr, timeStr, checkInType || 'Gym Access']);
+    const rows = await query('SELECT * FROM attendance WHERE id = ?', [result.insertId]);
+    return rows[0] ? mapAttendance(rows[0]) : null;
   },
 
-  // --- PAYMENTS ---
+  // PAYMENTS
   getPayments: async () => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('payments')
-      .select(`
-        *,
-        member:member_id (name),
-        plan:plan_id (name)
-      `)
-      .order('date', { ascending: false });
-
-    if (error) throw error;
-    return data.map(mapPayment);
+    const rows = await query('SELECT p.*, m.name AS member_name, pl.name AS plan_name FROM payments p JOIN members m ON p.member_id = m.id LEFT JOIN plans pl ON p.plan_id = pl.id ORDER BY p.date DESC');
+    return rows.map(mapPayment);
   },
 
-  // Get payments for a specific member
   getPaymentsByMember: async (memberId) => {
     if (!isConfigured) return [];
-
-    const { data, error } = await supabase
-      .from('payments')
-      .select(`
-        *,
-        plan:plan_id (name)
-      `)
-      .eq('member_id', memberId)
-      .order('date', { ascending: false });
-
-    if (error) throw error;
-    return data.map(p => ({
-      id: p.id,
-      memberId: p.member_id,
-      planId: p.plan_id,
-      amount: Number(p.amount),
-      date: p.date,
-      paymentMethod: p.payment_method,
-      status: p.status,
-      planName: p.plan ? p.plan.name : 'Subscription Payment'
-    }));
+    const rows = await query('SELECT p.*, m.name AS member_name, pl.name AS plan_name FROM payments p JOIN members m ON p.member_id = m.id LEFT JOIN plans pl ON p.plan_id = pl.id WHERE p.member_id = ? ORDER BY p.date DESC', [memberId]);
+    return rows.map(mapPayment);
   },
 
   recordPayment: async (paymentData) => {
     if (!isConfigured) return null;
-
-    const { data, error } = await supabase
-      .from('payments')
-      .insert([{
-        member_id: paymentData.memberId,
-        plan_id: paymentData.planId,
-        amount: Number(paymentData.amount),
-        date: new Date().toISOString().split('T')[0],
-        payment_method: paymentData.paymentMethod || 'Card',
-        status: 'Paid'
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const { memberId, planId, amount, paymentMethod } = paymentData;
+    const dateStr = new Date().toISOString().split('T')[0];
+    const result = await query('INSERT INTO payments (member_id, plan_id, amount, date, payment_method, status) VALUES (?,?,?,?,?,?)', [memberId, planId, Number(amount), dateStr, paymentMethod || "Card", "Paid"]);
+    const rows = await query('SELECT * FROM payments WHERE id = ?', [result.insertId]);
+    return rows[0] ? mapPayment(rows[0]) : null;
   },
 
-  // --- PASSWORD MANAGEMENT ---
-  // --- PASSWORD MANAGEMENT ---
+  // PASSWORD MANAGEMENT
   updatePassword: async (role, email, currentPassword, newPassword) => {
     if (!isConfigured) return false;
-
     const table = role === 'trainer' ? 'trainers' : 'members';
-
-    // Verify current password
-    const { data: user, error: verifyErr } = await supabase
-      .from(table)
-      .select('id')
-      .eq('email', email)
-      .eq('password', currentPassword)
-      .maybeSingle();
-
-    if (verifyErr) throw verifyErr;
-    if (!user) return false; // Incorrect current password
-
-    // Update to new password
-    const { error: updateErr } = await supabase
-      .from(table)
-      .update({ password: newPassword })
-      .eq('id', user.id);
-
-    if (updateErr) throw updateErr;
-    return true; // Success
+    const rows = await query(`SELECT id FROM ${table} WHERE email = ? AND password = ?`, [email, currentPassword]);
+    if (rows.length === 0) return false;
+    const userId = rows[0].id;
+    await query(`UPDATE ${table} SET password = ? WHERE id = ?`, [newPassword, userId]);
+    return true;
   },
 
-  // Check whether a user exists for OTP generation
   checkUserExists: async (role, email) => {
     if (!isConfigured) return false;
     const table = role === 'trainer' ? 'trainers' : 'members';
-    const { data, error } = await supabase
-      .from(table)
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-    if (error) throw error;
-    return !!data;
+    const rows = await query(`SELECT id FROM ${table} WHERE email = ?`, [email]);
+    return rows.length > 0;
   },
 
-  // Forcefully update password without verifying old password (used after OTP verification)
   forceUpdatePassword: async (role, email, newPassword) => {
     if (!isConfigured) return false;
     const table = role === 'trainer' ? 'trainers' : 'members';
-    const { error } = await supabase
-      .from(table)
-      .update({ password: newPassword })
-      .eq('email', email);
-    if (error) throw error;
+    await query(`UPDATE ${table} SET password = ? WHERE email = ?`, [newPassword, email]);
     return true;
+  },
+
+  // EQUIPMENT MANAGEMENT
+  getEquipments: async () => {
+    if (!isConfigured) return [];
+    return await query('SELECT * FROM equipments ORDER BY name ASC');
+  },
+
+  addEquipment: async (eq) => {
+    if (!isConfigured) return null;
+    const { name, status, notes } = eq;
+    const result = await query('INSERT INTO equipments (name, status, notes) VALUES (?,?,?)', [name, status || 'Operational', notes || '']);
+    const rows = await query('SELECT * FROM equipments WHERE id = ?', [result.insertId]);
+    return rows[0];
+  },
+
+  updateEquipment: async (id, upd) => {
+    if (!isConfigured) return null;
+    const fields = [];
+    const params = [];
+    for (const [k, v] of Object.entries(upd)) {
+      fields.push(`${k} = ?`);
+      params.push(v);
+    }
+    if (fields.length === 0) return null;
+    params.push(id);
+    await query(`UPDATE equipments SET ${fields.join(', ')} WHERE id = ?`, params);
+    const rows = await query('SELECT * FROM equipments WHERE id = ?', [id]);
+    return rows[0];
+  },
+
+  deleteEquipment: async (id) => {
+    if (!isConfigured) return false;
+    const result = await query('DELETE FROM equipments WHERE id = ?', [id]);
+    return result.affectedRows > 0;
   }
 };
 
