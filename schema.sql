@@ -5,6 +5,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS attendance;
+DROP TABLE IF EXISTS trainer_attendance;
 DROP TABLE IF EXISTS members;
 DROP TABLE IF EXISTS trainers;
 DROP TABLE IF EXISTS plans;
@@ -58,6 +59,16 @@ CREATE TABLE attendance (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
+-- 4.b TRAINER ATTENDANCE TABLE
+CREATE TABLE trainer_attendance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  trainer_id INT NOT NULL,
+  date DATE,
+  time TIME,
+  check_in_type VARCHAR(100) DEFAULT 'Shift Start',
+  FOREIGN KEY (trainer_id) REFERENCES trainers(id) ON DELETE CASCADE
+);
+
 -- 5. PAYMENTS TABLE
 CREATE TABLE payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -85,6 +96,7 @@ CREATE INDEX idx_members_status ON members(status);
 CREATE INDEX idx_members_email ON members(email);
 CREATE INDEX idx_trainers_email ON trainers(email);
 CREATE INDEX idx_attendance_member ON attendance(member_id);
+CREATE INDEX idx_trainer_attendance_trainer ON trainer_attendance(trainer_id);
 CREATE INDEX idx_payments_member ON payments(member_id);
 
 -- ================= SEED DATA INSERTIONS =================

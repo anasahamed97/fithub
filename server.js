@@ -172,11 +172,12 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // ══════════════════════════════════════════
 app.get('/api/dashboard', async (req, res) => {
   try {
-    const [members, plans, trainers, attendance, payments] = await Promise.all([
+    const [members, plans, trainers, attendance, trainerAttendance, payments] = await Promise.all([
       db.getMembers(),
       db.getPlans(),
       db.getTrainers(),
       db.getAttendance(),
+      db.getTrainerAttendance(),
       db.getPayments()
     ]);
 
@@ -212,6 +213,18 @@ app.get('/api/dashboard', async (req, res) => {
         time: att.date,
         icon: 'user-check',
         color: 'cyan'
+      });
+    });
+
+    // Add recent trainer check-ins
+    trainerAttendance.slice(0, 5).forEach(att => {
+      recentActivity.push({
+        type: 'trainer-attendance',
+        title: `${att.trainerName} (Trainer) checked in`,
+        detail: `Checked in for ${att.checkInType} at ${att.time}`,
+        time: att.date,
+        icon: 'user-shield',
+        color: 'indigo'
       });
     });
 
@@ -534,6 +547,31 @@ app.post('/api/attendance/checkin', async (req, res) => {
 
     const record = await db.checkInMember(memberId, checkInType);
     if (!record) return res.status(404).json({ error: 'Member not found' });
+
+    res.status(201).json(record);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/trainer-attendance', async (req, res) => {
+  try {
+    const records = await db.getTrainerAttendance();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/trainer-attendance/checkin', async (req, res) => {
+  try {
+    const { trainerId, checkInType } = req.body;
+    if (!trainerId) {
+      return res.status(400).json({ error: 'Trainer ID is required for check-in' });
+    }
+
+    const record = await db.checkInTrainer(trainerId, checkInType);
+    if (!record) return res.status(404).json({ error: 'Trainer not found' });
 
     res.status(201).json(record);
   } catch (error) {

@@ -61,6 +61,19 @@ function mapAttendance(a) {
   };
 }
 
+function mapTrainerAttendance(a) {
+  if (!a) return null;
+  return {
+    id: a.id,
+    trainerId: a.trainer_id,
+    date: a.date,
+    time: a.time ? a.time.substring(0,5) : '',
+    checkInType: a.check_in_type,
+    trainerName: a.trainer_name,
+    trainerEmail: a.trainer_email
+  };
+}
+
 function mapPayment(p) {
   if (!p) return null;
   return {
@@ -272,6 +285,22 @@ getMembersByTrainer: async (trainerId) => {
     const result = await query('INSERT INTO attendance (member_id, date, time, check_in_type) VALUES (?,?,?,?)', [memberId, dateStr, timeStr, checkInType || 'Gym Access']);
     const rows = await query('SELECT * FROM attendance WHERE id = ?', [result.insertId]);
     return rows[0] ? mapAttendance(rows[0]) : null;
+  },
+
+  getTrainerAttendance: async () => {
+    if (!isConfigured) return [];
+    const rows = await query('SELECT a.*, t.name AS trainer_name, t.email AS trainer_email FROM trainer_attendance a JOIN trainers t ON a.trainer_id = t.id ORDER BY a.date DESC, a.time DESC');
+    return rows.map(mapTrainerAttendance);
+  },
+
+  checkInTrainer: async (trainerId, checkInType) => {
+    if (!isConfigured) return null;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0];
+    const result = await query('INSERT INTO trainer_attendance (trainer_id, date, time, check_in_type) VALUES (?,?,?,?)', [trainerId, dateStr, timeStr, checkInType || 'Shift Start']);
+    const rows = await query('SELECT * FROM trainer_attendance WHERE id = ?', [result.insertId]);
+    return rows[0] ? mapTrainerAttendance(rows[0]) : null;
   },
 
   // PAYMENTS

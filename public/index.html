@@ -279,7 +279,21 @@
           <!-- Checkin Panel -->
           <div class="glass-panel form-panel">
             <div class="panel-header-sub">
-              <h2><i class="fa-solid fa-id-card text-cyan"></i> Check-in Member</h2>
+              <h2><i class="fa-solid fa-id-card text-cyan"></i> Check-in Dashboard</h2>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+              <label style="margin-bottom: 8px; display: block;">Who is checking in?</label>
+              <div style="display: flex; gap: 1.5rem;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <input type="radio" name="checkin-person-type" value="member" checked onchange="document.getElementById('attendance-checkin-form').style.display='block'; document.getElementById('trainer-checkin-form').style.display='none';"> 
+                  Member
+                </label>
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <input type="radio" name="checkin-person-type" value="trainer" onchange="document.getElementById('attendance-checkin-form').style.display='none'; document.getElementById('trainer-checkin-form').style.display='block';"> 
+                  Trainer
+                </label>
+              </div>
             </div>
             <form id="attendance-checkin-form" class="responsive-form">
               <div class="form-group">
@@ -303,7 +317,31 @@
               </div>
 
               <button type="submit" class="btn btn-cyan btn-full">
-                <i class="fa-solid fa-circle-check"></i> Process Check-In
+                <i class="fa-solid fa-circle-check"></i> Process Member Check-In
+              </button>
+            </form>
+            
+            <form id="trainer-checkin-form" class="responsive-form" style="display: none;">
+              <div class="form-group">
+                <label for="checkin-trainer-select">Select Trainer *</label>
+                <select id="checkin-trainer-select" class="form-select select-searchable" required>
+                  <option value="" disabled selected>Choose a trainer...</option>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="checkin-trainer-type-select">Check-In Type / Class</label>
+                <select id="checkin-trainer-type-select" class="form-select">
+                  <option value="Shift Start">Shift Start</option>
+                  <option value="Personal Training Session">Personal Training Session</option>
+                  <option value="Group Class Instruction">Group Class Instruction</option>
+                  <option value="Gym Access">General Gym Access</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full" style="background-color: var(--color-purple); border-color: var(--color-purple);">
+                <i class="fa-solid fa-circle-check"></i> Process Trainer Check-In
               </button>
             </form>
           </div>
@@ -317,8 +355,8 @@
               <table class="main-table">
                 <thead>
                   <tr>
-                    <th>Member</th>
-                    <th>Email</th>
+                    <th>Person</th>
+                    <th>Role</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Access Type</th>

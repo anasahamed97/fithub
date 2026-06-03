@@ -27,6 +27,7 @@ let state = {
   plans: [],
   trainers: [],
   attendance: [],
+  trainerAttendance: [],
   payments: [],
   equipment: [],
   activeView: 'dashboard'
@@ -67,11 +68,12 @@ function initClock() {
 // 2. DATA ORCHESTRATOR
 async function loadAllData() {
   try {
-    const [membersRes, plansRes, trainersRes, attendanceRes, paymentsRes, equipmentRes] = await Promise.all([
+    const [membersRes, plansRes, trainersRes, attendanceRes, trainerAttendanceRes, paymentsRes, equipmentRes] = await Promise.all([
       fetch(`${API_URL}/members`),
       fetch(`${API_URL}/plans`),
       fetch(`${API_URL}/trainers`),
       fetch(`${API_URL}/attendance`),
+      fetch(`${API_URL}/trainer-attendance`),
       fetch(`${API_URL}/payments`),
       fetch(`${API_URL}/equipment`)
     ]);
@@ -80,6 +82,7 @@ async function loadAllData() {
     state.plans = await plansRes.json();
     state.trainers = await trainersRes.json();
     state.attendance = await attendanceRes.json();
+    state.trainerAttendance = await trainerAttendanceRes.json();
     state.payments = await paymentsRes.json();
     state.equipment = await equipmentRes.json();
 
@@ -310,7 +313,18 @@ function loadAttendanceView() {
   const tbody = document.getElementById('attendance-feed-tbody');
   tbody.innerHTML = '';
 
-  if (state.attendance.length === 0) {
+  const combinedAttendance = [
+    ...state.attendance.map(a => ({ ...a, type: 'member' })),
+    ...state.trainerAttendance.map(a => ({ ...a, type: 'trainer' }))
+  ];
+
+  combinedAttendance.sort((a, b) => {
+    const datetimeA = new Date(`${a.date}T${a.time}`);
+    const datetimeB = new Date(`${b.date}T${b.time}`);
+    return datetimeB - datetimeA;
+  });
+
+  if (combinedAttendance.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="5" class="text-center text-muted">No check-in logs recorded.</td>
@@ -319,11 +333,19 @@ function loadAttendanceView() {
     return;
   }
 
-  state.attendance.forEach(a => {
+  combinedAttendance.forEach(a => {
     const row = document.createElement('tr');
+    const name = a.type === 'member' ? a.memberName : a.trainerName;
+    const email = a.type === 'member' ? a.memberEmail : a.trainerEmail;
+    const role = a.type === 'member' ? 'Member' : 'Trainer';
+    const roleStyle = a.type === 'member' ? 'var(--color-purple)' : 'var(--color-indigo)';
+    
     row.innerHTML = `
-      <td><strong>${a.memberName}</strong></td>
-      <td><span class="text-muted">${a.memberEmail || '-'}</span></td>
+      <td>
+        <strong>${name}</strong>
+        <div style="font-size: 0.75rem; color: var(--text-muted)">${email || '-'}</div>
+      </td>
+      <td><span class="badge" style="background: transparent; color: ${roleStyle}; border: 1px solid ${roleStyle}">${role}</span></td>
       <td>${a.date}</td>
       <td>${a.time}</td>
       <td><span class="badge badge-active" style="background: rgba(6, 182, 212, 0.1); color: var(--color-cyan); border: 1px solid rgba(6, 182, 212, 0.2);">${a.checkInType}</span></td>
@@ -465,14 +487,21 @@ function populateDropdowns() {
   // B. Attendance Check-in form selections
   const checkinSelect = document.getElementById('checkin-member-select');
   const quickcheckinSelect = document.getElementById('quick-checkin-member');
+  const trainerCheckinSelect = document.getElementById('checkin-trainer-select');
 
   const memberOptions = state.members
     .filter(m => m.status === 'Active')
     .map(m => `<option value="${m.id}">${m.name} (${m.phone})</option>`)
     .join('');
 
+  const activeTrainerOptions = state.trainers
+    .filter(t => t.status === 'Active')
+    .map(t => `<option value="${t.id}">${t.name} (${t.specialty})</option>`)
+    .join('');
+
   checkinSelect.innerHTML = '<option value="" disabled selected>Choose a member...</option>' + memberOptions;
   quickcheckinSelect.innerHTML = '<option value="" disabled selected>Choose member...</option>' + memberOptions;
+  if (trainerCheckinSelect) trainerCheckinSelect.innerHTML = '<option value="" disabled selected>Choose a trainer...</option>' + activeTrainerOptions;
 
   // C. Payment form selections
   const payMemberSelect = document.getElementById('payment-form-member');
@@ -1064,6 +1093,17 @@ function setupEventListeners() {
     );
   });
 
+  const trainerForm = document.getElementById('trainer-checkin-form');
+  if(trainerForm) {
+    trainerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      processTrainerCheckin(
+        document.getElementById('checkin-trainer-select').value,
+        document.getElementById('checkin-trainer-type-select').value
+      );
+    });
+  }
+
   document.getElementById('quick-checkin-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     processCheckin(
@@ -1252,6 +1292,29 @@ async function processCheckin(memberId, checkInType, modalToClose) {
     }
   } catch (err) {
     showToast("Network error checking in member", "error");
+  }
+}
+
+async function processTrainerCheckin(trainerId, checkInType) {
+  try {
+    const res = await fetch(`${API_URL}/trainer-attendance/checkin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trainerId, checkInType })
+    });
+
+    if (res.ok) {
+      showToast("Trainer successfully checked in.", "success");
+      document.getElementById('trainer-checkin-form').reset();
+      await loadAllData();
+      if (state.activeView === 'dashboard') loadDashboardView();
+      if (state.activeView === 'attendance') loadAttendanceView();
+    } else {
+      const err = await res.json();
+      showToast(err.error || "Failed to log trainer attendance.", "error");
+    }
+  } catch (err) {
+    showToast("Network error checking in trainer", "error");
   }
 }
 
